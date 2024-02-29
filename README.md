@@ -8,6 +8,6 @@
   
 2. [House Price Prediction](https://github.com/gchipanap/Data-Science-Portfolio/tree/main/House%20Price%20Prediction)
    - **Description:** This data science project aims to forecast housing prices utilizing a dataset comprising diverse features and attributes associated with residential properties. Through data analysis and modeling, the project endeavors to construct a predictive model capable of accurately estimating the selling prices of houses.
-   - ** Technologies Used: ** The notebooks uses Linear Regression, Ridge Regression and Random Forest Regressor with sklearn
-   - **Results: ** The Forest Regressor model was the best among the models used, with an accuracy of 87.98%.
+   - **Technologies Used:** The notebooks uses Linear Regression, Ridge Regression and Random Forest Regressor with sklearn
+   - **Results:** The Forest Regressor model was the best among the models used, with an accuracy of 87.98%.
    
