@@ -1,0 +1,79 @@
+/* Sankey diagram */
+
+#card-sankey {
+  float: right;
+  margin-left: 8px;
+}
+
+.node rect {
+  cursor: move;
+  fill-opacity: .9;
+  shape-rendering: crispEdges;
+}
+
+.node text {
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.link {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .2;
+}
+
+.link:hover {
+  stroke-opacity: .5;
+}
+
+.sankey-container{
+  justify-content: center;
+}
+
+textarea{
+  resize: none;
+}
+
+#boton {
+  float: right;
+  width: 60px;
+  margin-right: 12px;
+}
+
+#myButton {
+  border:none;
+  width: 80px;
+  height: 41px;
+  font-weight: bold;
+  color: whitesmoke;
+  background-color: rgb(60, 106, 152);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+textarea{
+  border-radius: 5px;
+}
+
+#myButton:hover{
+  background-color: rgb(77, 134, 190);
+}
+
+#label-start {
+  float: left;
+  font-weight: bold;
+  margin-bottom: 3px;
+  margin-left: 11px;
+}
+
+#label-end {
+  float: right;
+  font-weight: bold;
+  margin-bottom: 3px;
+  margin-right: 11px;
+}
+
+#form-trips {
+  margin-right: 20px;
+  margin-left: 11px;
+}

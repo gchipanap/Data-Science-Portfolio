@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mapa de Clusters</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #controls {
+            background-color: #4CAF50;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #controls label {
+            margin-right: 10px;
+        }
+        select, button {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+        }
+        select {
+            min-width: 100px;
+        }
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
+    <!-- Reemplazar "TU_API_KEY_DE_GOOGLE_MAPS" con tu clave de API de Google Maps -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCGftEzsfxer1yClrnjRDyGP-NMQKGj5dk&libraries=places"></script>
+</head>
+<body>
+    <div id="controls">
+        <label for="month">Seleccionar mes:</label>
+        <select id="month">
+            <option value="01">Enero</option>
+            <option value="02">Febrero</option>
+            <option value="03">Marzo</option>
+            <option value="04">Abril</option>
+            <option value="05">Mayo</option>
+            <option value="06">Junio</option>
+            <option value="07">Julio</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <!-- ... Opciones para los otros meses ... -->
+            <option value="12">Diciembre</option>
+        </select>
+    
+        <label for="day">Seleccionar día:</label>
+        <select id="day">
+            <option value="01">01</option>
+            <option value="02">02</option>
+            <option value="03">03</option>
+            <option value="03">03</option>
+            <option value="04">04</option>
+            <option value="05">05</option>
+            <option value="06">06</option>
+            <option value="07">07</option>
+            <option value="08">08</option>
+            <option value="09">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <!-- ... Opciones para los otros días ... -->
+            <option value="31">31</option>
+        </select>        
+        <button id="prevDay">Anterior</button>
+        <button id="nextDay">Siguiente</button>
+    </div>
+    <div id="map"></div>
+    <!-- <div id="contenido_externo">
+        <iframe src="http://127.0.0.1:5500/try/grafico_clusters.html" width="100%" height="600"></iframe>
+    </div> -->
+    <script>
+        let clusterMarkers = {};
+        let bandera = false;
+        updateMap();
+        document.getElementById('month').addEventListener('change', updateMap);
+        document.getElementById('day').addEventListener('change', updateMap);
+        
+        function updateMap() {
+            const selectedMonth = document.getElementById('month').value;
+            const selectedDay = document.getElementById('day').value;
+            if(bandera){
+                clearMarkers();
+            }
+            
+            // clearClustersAndLegend();
+            if (selectedMonth && selectedDay) {
+                console.log('entre');
+                const jsonURL = `anio/${selectedMonth}/${selectedDay}.json`;
+                fetchAndDisplayData(jsonURL);
+                bandera = true;
+            } else {
+            console.log("problemas")
+        }
+        }
+        const prevDayButton = document.getElementById('prevDay');
+        const nextDayButton = document.getElementById('nextDay');
+
+        // Crear el mapa de Google Maps
+        const map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: 40.7, lng: -74 },
+            zoom: 12,
+            mapTypeId: 'roadmap',
+        });
+
+        // Función para obtener lugares públicos cercanos a una ubicación (latitud, longitud) y un tipo específico
+        function getNearbyPlaces(lat, lon, placeType, radius = 1000) {
+            const request = {
+                location: new google.maps.LatLng(lat, lon),
+                radius: radius,
+                type: [placeType],
+            };
+
+            const service = new google.maps.places.PlacesService(map);
+            service.nearbySearch(request, function (results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    for (let i = 0; i < results.length; i++) {
+                        const place = results[i];
+                        const marker = new google.maps.Marker({
+                            position: place.geometry.location,
+                            map: map,
+                            icon: 'URL_DEL_ICONO_PARA_LUGAR_PUBLICO',
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Cargar los datos de los clusters desde el archivo JSON
+        function fetchAndDisplayData(jsonURL){
+        fetch(jsonURL)
+        .then(response => response.json())
+        .then(data => {
+            // Crear un diccionario para almacenar las capas de marcadores por cluster
+            
+            
+            // Agregar los marcadores para cada estación en cada cluster
+            data.clusters.forEach(cluster => {
+                const clusterId = cluster.color;
+                clusterMarkers[clusterId] = [];
+
+                cluster.stations.forEach(station => {
+                    const marker = new google.maps.Marker({
+                        position: { lat: station.lat, lng: station.lon },
+                        map: map,
+                        icon: `http://maps.google.com/mapfiles/ms/icons/${getColorForCluster(clusterId)}.png`,
+                    });
+
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: station.tooltip,
+                    });
+
+                    marker.addListener('mouseover', () => {
+                        infoWindow.open(map, marker);
+                    });
+
+                    marker.addListener('mouseout', () => {
+                        infoWindow.close();
+                    });
+
+                    clusterMarkers[clusterId].push(marker);
+
+                    // Llamar a la función para obtener lugares públicos cercanos a esta estación
+                    getNearbyPlaces(station.lat, station.lon, "establishment");
+                });
+            });
+
+            // Función para mostrar u ocultar los clusters cuando se hace clic en la leyenda
+            function toggleCluster(clusterId) {
+                const markers = clusterMarkers[clusterId];
+                markers.forEach(marker => {
+                    if (marker.getMap() === null) {
+                        marker.setMap(map);
+                    } else {
+                        marker.setMap(null);
+                    }
+                });
+            }
+
+            // Agregar la leyenda para los clusters
+            const legend = document.createElement('div');
+            legend.classList.add('legend')
+            legend.style.backgroundColor = 'white';
+            legend.style.padding = '10px';
+            legend.style.borderRadius = '5px';
+            legend.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.3)';
+            legend.innerHTML = '<h3>Leyenda</h3>';
+
+            data.clusters.forEach(cluster => {
+                const clusterId = cluster.color;
+                const clusterName = `Cluster ${clusterId}`;
+
+                const clusterLegend = document.createElement('div');
+                clusterLegend.className = 'legend-item';
+                clusterLegend.style.cursor = 'pointer';
+                clusterLegend.style.marginBottom = '8px';
+                clusterLegend.innerHTML = `<span style="background-color: ${getColorForCluster(clusterId)}; width: 20px; height: 20px; display: inline-block; margin-right: 8px;"></span>${clusterName}`;
+
+                clusterLegend.addEventListener('click', () => {
+                    toggleCluster(clusterId);
+                });
+
+                legend.appendChild(clusterLegend);
+            });
+
+            map.controls[google.maps.ControlPosition.TOP_RIGHT].push(legend);
+        });
+        }
+
+        // Función para obtener el color correspondiente a cada cluster
+        function getColorForCluster(clusterId) {
+            // Lista de colores para los clusters
+            const colors = [
+                'red', 'blue', 'green', 'yellow', 'purple', 'orange','pink'
+            ];
+
+            // Si el número de clusters es mayor que la lista de colores, repetir los colores
+            return colors[clusterId % colors.length];
+        }
+        function clearMarkers() {
+    for (const clusterId in clusterMarkers) {
+        const markers = clusterMarkers[clusterId];
+        markers.forEach(marker => {
+            marker.setMap(null);
+        });
+        clusterMarkers[clusterId] = [];
+    }
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].removeAt(0);
+}
+    </script>
+</body>
+</html>
+
+
+
+

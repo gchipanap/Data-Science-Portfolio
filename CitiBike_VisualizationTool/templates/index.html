@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link rel="stylesheet" href="{{ url_for('static',filename='css/index.css') }}"> -->
+<link rel="stylesheet" href="{{ url_for('static',filename='css/mapa12.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/sankey.css') }}">
+<script type="text/javascript" src="{{ url_for('static',filename='js/map.js')}}" defer></script>
+<script type="text/javascript" src="{{ url_for('static',filename='js/sankey.js')}}" defer></script>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="{{ url_for('static',filename='js/d3-sankey.js')}}" type="text/javascript"></script>
+<script src="{{ url_for('static',filename='js/d3-tip.js')}}" type="text/javascript"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCGftEzsfxer1yClrnjRDyGP-NMQKGj5dk&libraries=places"></script>
+
+<title>CitiBike Visualization</title>
+<style>
+    /* Estilos para el formulario */
+    form {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 20px;
+        background-color: #e6f7ff;
+        border-radius: 5px;
+    }
+
+    label {
+        margin-right: 10px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    input[type="number"] {
+        width: 60px;
+        padding: 5px;
+        margin-right: 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+
+    input[type="radio"] {
+        margin-bottom: 10px;
+    }
+
+    input[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    /* Estilos para el título según la opción seleccionada */
+    h2 {
+        font-size: 18px;
+        margin-top: 20px;
+        color: #4CAF50;
+        text-align: center;
+    }
+    #body-visualization {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    nav {
+    background-color: #333;
+    color: #fff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 60px;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+nav li {
+    margin: 0 15px;
+}
+
+nav a {
+    color: #fff;
+    text-decoration: none;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+</style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Heatmap</a></li>
+            <li><a href="/history-dynamic">History Dynamic</a></li>
+            <li><a href="/trayectorias">Trayectorias</a></li>
+        </ul>
+    </nav>
+    <h4 id="title-information">Viajes</h4>
+    <form name="form-viajes-tipos" action="{{ url_for('get_stations') }}" method="post">
+        <label for="anio">Año:</label>
+        <input type="number" id="anio" name="anio" min="2015" max="2018" required><br>
+    
+        <label for="mes">Mes:</label>
+        <input type="number" id="mes" name="mes" min="01" max="12"><br>
+    
+        <!-- <label for="hora">Hora:</label>
+        <input type="number" id="hora" name="hora" min="0" max="23"><br> -->
+    
+        <input type="radio" id="todo" name="viaje-tipos" value="viajes-todo" required>
+        <label class="item" for="todo">Todos los viajes</label><br>
+    
+        <input type="radio" id="salida" name="viaje-tipos" value="viajes-salida">
+        <label class="item" for="salida">Sólo viajes de salida</label><br>
+    
+        <input type="radio" id="llegada" name="viaje-tipos" value="viajes-llegada">
+        <label class="item" for="llegada">Sólo viajes de llegada</label><br>
+        <br>
+        <input type="submit" value="Mostrar"/>
+    </form>
+    <script>
+        // Función para mostrar el título según la opción seleccionada
+        function mostrarTitulo(event) {
+            const anio = document.getElementById('anio').value;
+            const mes = document.getElementById('mes').value;
+    
+            let titulo = "Estaciones de New York en el " + anio;
+    
+            if (mes) {
+                titulo += "-" + mes.toString().padStart(2, '0');
+            }
+    
+            // Almacenar el valor del título en el localStorage
+            localStorage.setItem('tituloGuardado', titulo);
+    
+            document.getElementById('titulo').innerText = titulo;
+        }
+    
+        // Evento para llamar a la función mostrarTitulo al cambiar el valor del año o mes
+        document.getElementById('anio').addEventListener('change', mostrarTitulo);
+        document.getElementById('mes').addEventListener('change', mostrarTitulo);
+    
+        // Cargar el título guardado del localStorage al cargar la página
+        window.addEventListener('load', function() {
+            const tituloGuardado = localStorage.getItem('tituloGuardado');
+    
+            if (tituloGuardado) {
+                document.getElementById('titulo').innerText = tituloGuardado;
+            }
+        });
+    
+        // Evento para asignar el valor del título guardado después de enviar el formulario
+        document.querySelector('form').addEventListener('submit', function(event) {
+            const tituloGuardado = localStorage.getItem('tituloGuardado');
+    
+            if (tituloGuardado) {
+                document.getElementById('titulo').innerText = tituloGuardado;
+            }
+        });
+    </script>
+        
+    
+    <h2 id="titulo">Estaciones de New York</h2>
+    <div id="body-visualization">
+        <!-- MAP -->
+        <div class="main-container" style="display: flex;">
+            <div id="card-map" class="card" style="width:63rem; height:68rem;">
+                <div id="map-container" style="width: 63rem; height: 66rem;"></div>
+                    <div id="legend">
+                    </div>
+            </div>
+            <div id="graph-container">
+                <h1 class="titulo_graph">Gráficos de demanda a traves del tiempo</h1>
+                <div class="contenedorgraficoshoras">
+                    <div class="titulosalida">
+                        <h1 class="titulo_graph">Salidas Horas: </h1>
+                        <div id="salidasChart"></div>
+                    </div>
+                </div>
+                <div class="contenedorgraficoshoras">
+                    <div class="titulosalida">
+                        <h1 class="titulo_graph">Salidas Dias: </h1>
+                        <div id="salidasChartdias"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- SANKEY -->
+        <!-- <div id="card-sankey" class="card" style="width:29.5rem; height:34rem">
+        <h3 class="subtitle">Trips</h3>
+
+        <form id="form-trips" action="{{url_for('sankey')}}" method="post">
+            <p><label for="estaciones-input">ID's de estaciones:</label></p>
+            <textarea id="estaciones-input" name="estaciones-input" rows="2" cols="38" placeholder=""></textarea>
+            <div id="boton">
+            <button id="myButton" type="submit">Dibujar!</button>
+            </div>
+        </form>
+
+        <p id="label-start">Start</p>
+        <p id="label-end">End</p>
+        <div id="sankey-container" style="width: 59.5rem; height: 42rem;"></div>
+        </div> -->
+    </div>
+    <div id="contenido_externo" style="height: 800px; width: 98vw;">
+        <iframe src="http://127.0.0.1:8050/" width="100%" height="100%"></iframe>
+    </div>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .body-visualization {
+            width: 123rem;
+            height: 66rem;
+            margin: 50px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title {
+            background-color: green;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            width: 100%;
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+        .card {
+            width: 50rem;
+            height: 50rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        #form-trips {
+            width: 100%;
+        }
+        #estaciones-input {
+            width: 100%;
+        }
+        #boton {
+            text-align: center;
+            margin-top: 10px;
+        }
+        #myButton {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: blue;
+            color: white;
+            cursor: pointer;
+        }
+        #sankey-container {
+            width: 48rem;
+            height: 47rem;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #label-start,
+        #label-end {
+            margin: 0;
+            padding: 5px;
+        }
+        #contenido_externo {
+            height: 40rem;
+            width: 50rem;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <style>
+        /* Estilos para las etiquetas de las selecciones */
+        label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: bold;
+        }
+      
+        /* Estilos para los selectores */
+        select {
+          width: 150px;
+          padding: 5px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          font-size: 14px;
+        }
+      
+        /* Estilos específicos para el selector "mes" */
+        #mes {
+          margin-right: 20px;
+        }
+      
+        /* Estilos específicos para el selector "dia" */
+        #dia {
+          background-color: #f4f4f4;
+        }
+      </style>
+    <div class="body-visualization">
+        <div class="section-title">Trayectorias</div>
+        <div style="display:flex; gap:20px; align-items: center; justify-content: center;">
+            <div id="card-sankey" class="card">
+                <form id="form-trips" action="{{url_for('sankey')}}" method="post">
+                    <p><label for="estaciones-input">ID's de estaciones:</label></p>
+                    <textarea id="estaciones-input" name="estaciones-input" rows="2" cols="38" placeholder=""></textarea>
+                    <label for="mes">Seleccionar mes:</label>
+                    <select id="mes" name="mes">
+                        <option value="01">Enero</option>
+                        <option value="02">Febrero</option>
+                        <option value="03">Marzo</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Mayo</option>
+                        <option value="06">Junio</option>
+                        <option value="07">Julio</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Setiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+            <!-- ... Opciones para los otros meses ... -->
+                        <option value="12">Diciembre</option>
+                        <!-- Agregar más opciones de meses aquí... -->
+                    </select>
+                    <label for="dia">Seleccionar día:</label>
+                    <select id="dia" name="dia">
+                        <option value="1">01</option>
+                        <option value="2">02</option>
+                        <option value="3">03</option>
+            <option value="3">03</option>
+            <option value="4">04</option>
+            <option value="5">05</option>
+            <option value="6">06</option>
+            <option value="7">07</option>
+            <option value="8">08</option>
+            <option value="9">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <!-- ... Opciones para los otros días ... -->
+            <option value="31">31</option>
+                        <!-- Agregar más opciones de días aquí... -->
+                    </select>
+                    <label for="hora">Seleccionar hora:</label>
+                    <select id="hora" name="hora">
+                        <option value="opcion">Opcional</option>
+                        <option value="0">00</option>
+                        <option value="1">01</option>
+            <option value="2">02</option>
+            <option value="3">03</option>
+            <option value="3">03</option>
+            <option value="4">04</option>
+            <option value="5">05</option>
+            <option value="6">06</option>
+            <option value="7">07</option>
+            <option value="8">08</option>
+            <option value="9">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+                        <!-- Agregar más opciones de días aquí... -->
+                    </select>
+                    <div id="boton">
+                        <button id="myButton" type="submit">Dibujar!</button>
+                    </div>
+                </form>
+    
+                <div id="sankey-container">
+                    <p id="label-start">Start</p>
+                    <p id="label-end">End</p>
+                </div>
+            </div>
+            <div id="contenido_externo">
+                <iframe src="http://127.0.0.1:5500/try/index.html" width="100%" height="100%"></iframe>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
