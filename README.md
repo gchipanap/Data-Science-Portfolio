@@ -18,4 +18,7 @@
    - **Description:** In this project, the prediction of crop yield is carried out, involving data preprocessing and studying the relationships between the data.
    - **Technologies Used:** Notebooks with Random Forest Regressor, AdaBoostRegressor, and GradientBoostingRegressor are utilized.
    - **Results:** The most relevant feature affecting crop yield is rainfall, and based on this data, it was found that GradientBoostingRegressor performed the best in prediction.
-   
+5. [Toy Store Sales Analysis with Power BI](https://github.com/gchipanap/Data-Science-Portfolio/tree/main/Toy%20Store%20Sales%20%20Analysis)
+   - **Description:** In this project, an analysis of sales was conducted for a chain of toy stores in Mexico, with the objective of identifying peaks and trends in sales under certain toy categories.
+   - **Technologies Used:** Power BI, time series visualization.
+   - **Results:* It is observed that every month experiences high sales peaks, with the months closest to December being the ones with the highest sales, specifically on April 2nd.
