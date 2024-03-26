@@ -19,3 +19,6 @@ The system must be capable of efficiently handling large volumes of data, ensuri
 
 ### Requirement 4: Data Granularity
 The visualization tool system must be able to adapt to and efficiently handle different levels of granularity present in the data to be visualized. It should allow users to explore and analyze information at various levels of detail.
+
+## Architecture
+The tool architecture includes the dataset module, which contains the information about the trips of the City-bike system, to be processed. Additionally, there is the time filter module, trip type filter (bike entry or exit), and filter for specific stations, ensuring that the user can interpret and interact with the data more effectively. To handle the large volume of data, .json files were used. To manage the large number of stations and compare them with each other, they were grouped using the Geo Clustering algorithm.
