@@ -22,3 +22,5 @@ The visualization tool system must be able to adapt to and efficiently handle di
 
 ## Architecture
 The tool architecture includes the dataset module, which contains the information about the trips of the City-bike system, to be processed. Additionally, there is the time filter module, trip type filter (bike entry or exit), and filter for specific stations, ensuring that the user can interpret and interact with the data more effectively. To handle the large volume of data, .json files were used. To manage the large number of stations and compare them with each other, they were grouped using the Geo Clustering algorithm.
+<img src="r[uta_de_la_imagen.jpg](https://github.com/gchipanap/Data-Science-Portfolio/blob/main/CitiBike_VisualizationTool/images/Screenshot%202024-03-25%20224742.png?raw=true)https://github.com/gchipanap/Data-Science-Portfolio/blob/main/CitiBike_VisualizationTool/images/Screenshot%202024-03-25%20224742.png?raw=true" alt="
+Overview of the visualization tool's functionality." width="200" height="300">
